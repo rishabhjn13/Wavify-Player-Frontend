@@ -1,12 +1,11 @@
 import AlbumArt from "./AlbumArt";
-
+import { toast } from "react-hot-toast";
 export default function ContextMenu({
     menuSong,
     menuRef,
     menuPosition,
     liked,
     toggleLike,
-    notify,
     playlists,
     addToPlaylist,
     navTo,
@@ -14,11 +13,12 @@ export default function ContextMenu({
     playlistSubmenu,
     setPlaylistSubmenu,
     submenuSide,
-    setMenuSong
+    setMenuSong,
+    API_URL,
 }) {
 
     if (!menuSong) return null;
-
+    console.log("Menusong is ", menuSong);
     return (
         <>
             {/* Backdrop */}
@@ -72,7 +72,7 @@ export default function ContextMenu({
                 </div>
 
                 {/* Like */}
-                <div className="ctx-item" onClick={() => { toggleLike(menuSong.id); setMenuSong(null); }}>
+                <div className="ctx-item" onClick={() => { toggleLike(menuSong); setMenuSong(null); }}>
                     <svg width="15" height="15" viewBox="0 0 24 24"
                         fill={liked.has(menuSong.id) ? "#f472b6" : "none"}
                         stroke={liked.has(menuSong.id) ? "#f472b6" : "#8070a8"}
@@ -85,7 +85,7 @@ export default function ContextMenu({
                 </div>
 
                 {/* Add to Queue */}
-                <div className="ctx-item" onClick={() => { notify("Added to queue"); setMenuSong(null); }}>
+                <div className="ctx-item" onClick={() => { toast.info("Added to queue"); setMenuSong(null); }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8070a8" strokeWidth="2">
                         <line x1="8" y1="6" x2="21" y2="6" />
                         <line x1="8" y1="12" x2="21" y2="12" />
@@ -145,11 +145,12 @@ export default function ContextMenu({
                                         onClick={async (e) => {
                                             e.stopPropagation();
                                             await addToPlaylist(pl.id, menuSong);
-                                            notify(`Added to "${pl.name}"`);
+                                            toast.success(`Added to "${pl.name}"`);
                                             setMenuSong(null);
                                             setPlaylistSubmenu(false);
                                         }}
                                     >
+                                        {console.log(pl)}
                                         <div style={{
                                             width: 28, height: 28, borderRadius: 5, flexShrink: 0,
                                             background: pl.color || "#1a1635",
@@ -180,14 +181,29 @@ export default function ContextMenu({
                 </div>
 
                 {/* Go to Artist */}
-                <div className="ctx-item" onClick={() => { notify("Going to artist"); setMenuSong(null); }}>
+                <div className="ctx-item" onClick={() => { toast.info("Going to artist"); setMenuSong(null); }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8070a8" strokeWidth="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
                     Go to artist
                 </div>
-            </div>
+
+                {/* Add one for download song */}
+
+                <a href={`${API_URL}/download?video_id=${menuSong.id}&title=${encodeURIComponent(menuSong.title)}&artist=${encodeURIComponent(menuSong.artist)}&thumbnail=${encodeURIComponent(menuSong.album_art || menuSong.thumbnail || "")}`} target="_blank" rel="noopener noreferrer"
+                    download
+                    style={{ textDecoration: "none" }}>
+                    <div className="ctx-item" onClick={() => { toast.info("Downloading song"); setMenuSong(null); }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8070a8" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Download
+                    </div>
+                </a>
+            </div >
         </>
     );
 }

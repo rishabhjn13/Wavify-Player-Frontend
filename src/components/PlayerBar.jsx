@@ -1,7 +1,12 @@
 import AlbumArt from "./AlbumArt";
 import fmt from "../utils/fmt";
+import { usePlayerStore } from "../stores/usePlayer.store";
+import toast from "react-hot-toast";
 
-export default function PlayerBar({ song, playing, progress, toggleLike, liked, toggle, next, prev, shuffle, setShuffle, repeat, setRepeat, volume, setVolume, setRightPanel, setProgress, rightPanel, pct, audioRef, notify }) {
+export default function PlayerBar({ playing, progress, toggleLike, liked, toggle, next, prev, shuffle, setShuffle, repeat, setRepeat, volume, setVolume, setRightPanel, setProgress, rightPanel, pct, audioRef }) {
+    const queue = usePlayerStore((s) => s.queue);
+    const currentIndex = usePlayerStore((s) => s.currentIndex);
+    const currentSong = queue[currentIndex] || null;
     return (
         <div>
             <div className="player-bar player-bar-desktop" style={{
@@ -11,13 +16,13 @@ export default function PlayerBar({ song, playing, progress, toggleLike, liked, 
             }}>
                 {/* Left: song info */}
                 <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                    <AlbumArt song={song} size={52} radius={9} />
+                    <AlbumArt song={currentSong || {}} size={52} radius={9} />
                     <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "#f0ecff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{song.title}</div>
-                        <div style={{ fontSize: 12, color: "#5a507a", marginTop: 1 }}>{song.artist} · {song.album}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "#f0ecff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentSong?.title || "No Song Playing"}</div>
+                        <div style={{ fontSize: 12, color: "#5a507a", marginTop: 1 }}>{currentSong?.artist} · {currentSong?.album} {"No Album"}</div>
                     </div>
-                    <button className={`iBtn${liked.has(song.id) ? " heart-lit" : ""}`} onClick={() => toggleLike(song.id)} style={{ marginLeft: 4, flexShrink: 0 }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={liked.has(song.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                    <button className={`iBtn${liked.has(currentSong?.id) ? " heart-lit" : ""}`} onClick={() => toggleLike(currentSong)} style={{ marginLeft: 4, flexShrink: 0 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={liked.has(currentSong?.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
                     </button>
@@ -26,7 +31,7 @@ export default function PlayerBar({ song, playing, progress, toggleLike, liked, 
                 {/* Center: controls + progress */}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 420 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <button className={`iBtn${shuffle ? " lit" : ""}`} onClick={() => { setShuffle(s => !s); notify(shuffle ? "Shuffle off" : "Shuffle on"); }}>
+                        <button className={`iBtn${shuffle ? " lit" : ""}`} onClick={() => { setShuffle(s => !s); toast.info(shuffle ? "Shuffle off" : "Shuffle on"); }}>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /></svg>
                         </button>
                         <button className="iBtn" onClick={prev} style={{ color: "#c4b5fd" }}>
@@ -44,20 +49,20 @@ export default function PlayerBar({ song, playing, progress, toggleLike, liked, 
                         <button className="iBtn" onClick={next} style={{ color: "#c4b5fd" }}>
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
                         </button>
-                        <button className={`iBtn${repeat ? " lit" : ""}`} onClick={() => { setRepeat(r => !r); notify(repeat ? "Repeat off" : "Repeat on"); }}>
+                        <button className={`iBtn${repeat ? " lit" : ""}`} onClick={() => { setRepeat(r => !r); toast.info(repeat ? "Repeat off" : "Repeat on"); }}>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>
                         </button>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
                         <span style={{ fontSize: 11, color: "#5a507a", minWidth: 34, textAlign: "right" }}>{fmt(progress)}</span>
-                        <input type="range" className="pbar" min={0} max={song.duration} value={progress} onChange={e => {
+                        <input type="range" className="pbar" min={0} max={currentSong?.duration} value={progress} onChange={e => {
                             const val = Number(e.target.value);
                             setProgress(val);
                             audioRef.current.currentTime = val;
                         }}
                             style={{ background: `linear-gradient(to right, #a78bfa ${pct}%, #1a1635 ${pct}%)` }} />
                         <span style={{ fontSize: 11, color: "#5a507a", minWidth: 34 }}>
-                            {song.duration ? fmt(song.duration) : "0:00"}
+                            {currentSong?.duration ? fmt(currentSong.duration) : "0:00"}
                         </span>
                     </div>
                 </div>
@@ -84,13 +89,13 @@ export default function PlayerBar({ song, playing, progress, toggleLike, liked, 
                     <div className="mobile-progress-fill" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="mobile-mini-player">
-                    <AlbumArt song={song} size={42} radius={7} />
+                    <AlbumArt song={currentSong} size={42} radius={7} />
                     <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#f0ecff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{song.title}</div>
-                        <div style={{ fontSize: 11, color: "#5a507a" }}>{song.artist}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#f0ecff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentSong?.title}</div>
+                        <div style={{ fontSize: 11, color: "#5a507a" }}>{currentSong?.artist}</div>
                     </div>
-                    <button className={`iBtn${liked.has(song.id) ? " heart-lit" : ""}`} onClick={() => toggleLike(song.id)}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={liked.has(song.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                    <button className={`iBtn${liked.has(currentSong?.id) ? " heart-lit" : ""}`} onClick={() => toggleLike(currentSong)}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={liked.has(currentSong?.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
                     </button>
                     <button onClick={toggle} style={{ width: 40, height: 40, borderRadius: "50%", background: "#a78bfa", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                         {playing

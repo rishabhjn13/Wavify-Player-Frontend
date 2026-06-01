@@ -1,7 +1,7 @@
+import { memo } from "react";
 
-const AlbumArt = ({ song, size = 48, radius = 8 }) => {
+const AlbumArt = memo(({ song, size = 48, radius = 8 }) => {
   if (!song) return <div style={{ width: size, height: size, background: '#1a1635', borderRadius: radius }} />;
-  console.log("Rendering AlbumArt for song:", song);
   const imageUrl = song.album_art || song.thumbnail;
 
   if (!imageUrl) {
@@ -40,5 +40,5 @@ const AlbumArt = ({ song, size = 48, radius = 8 }) => {
       />
     </div>
   );
-};
+});
 export default AlbumArt;
