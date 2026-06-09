@@ -22,6 +22,18 @@ Wavify is a **local-first music player frontend** — a React app that connects 
 
 ---
 
+## Screenshots
+
+![Screenshot 1](public/screenshots/1.png)
+![Screenshot 2](public/screenshots/2.png)
+![Screenshot 3](public/screenshots/3.png)
+![Screenshot 4](public/screenshots/4.png)
+![Screenshot 5](public/screenshots/5.png)
+![Screenshot 6](public/screenshots/6.png)
+![Screenshot 7](public/screenshots/7.png)
+![Screenshot 8](public/screenshots/8.png)
+
+
 ## Features
 
 - 🔍 **Song Search** — Search via YouTube Music metadata. Results show title, artist, album, thumbnail, and duration.
