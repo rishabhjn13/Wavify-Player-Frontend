@@ -127,13 +127,14 @@ wavify/
 
 - Node.js 18+
 - [Wavify Backend Engine](https://github.com/rishabhjn13/Wavify-Player-Backend) running on `localhost:8000`
+- `cookies.txt` file present in backend folder
 
 ### Installation
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/rishabhjn13/wavify.git
-cd wavify
+git clone https://github.com/rishabhjn13/Wavify-Player-Frontend.git
+cd Wavify-Player-Frontend
 ```
 
 **2. Install dependencies**
@@ -173,20 +174,12 @@ Wavify talks to the local backend for all data. The relevant endpoints it uses:
 | `POST` | `/playlists/{id}/played` | Mark playlist as played |
 | `GET` | `/songs/last-played` | Last played song on load |
 
-> **Note:** Audio streaming via yt-dlp is currently under maintenance on the backend. See [backend README](https://github.com/rishabhjn13/Wavify-Player-Backend) for status.
+> 
 
----
-
-## Known Issues
-
-- ⚠️ **Audio streaming** depends on the backend's yt-dlp pipeline, which is currently under maintenance due to YouTube signature challenge requirements.
-- 🔄 Audio analyser visualizer requires a streaming URL to be active — falls back gracefully when unavailable.
-
----
 
 ## Contributing
 
-This is a personal project but issues and PRs are welcome — especially around the audio visualizer, state architecture, or the streaming workaround once the backend yt-dlp fix lands.
+This is a personal project but issues and PRs are welcome — especially around the audio visualizer, state architecture,
 
 ---
 
