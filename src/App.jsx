@@ -1,54 +1,29 @@
-import { useState } from "react";
-import { useContextMenu } from "./hooks/useContextMenu";
-import { usePlaylists } from "./hooks/usePlaylists";
-import { useSearch } from "./hooks/useSearch";
-
 import './App.css';
+
+import { usePlaylistContext } from './context/PlaylistsContext';
+
 import ContextMenu from "./components/ContextMenu";
 import PlaylistMenu from "./components/PlaylistMenu";
 import MainContent from "./components/MainContent";
-import MobileSidebarOverlay from "./components/MobileSidebarOverlay";
+import PlayerBar from "./components/PlayerBar";
 import RightPanel from "./components/RightPanel";
 import SidebarContent from "./components/SidebarContent";
-import MobileTopBar from "./components/MobileTopBar";
-import PlayerBar from "./components/PlayerBar";
-import { usePlayerStore } from "./stores/usePlayer.store";
-import useAudioPlayer from "./hooks/useAudioPlayer";
-import { useRecents } from "./hooks/useRecents";
-import { useLikedSongs } from "./hooks/useLikedSongs";
 
 import { Toaster } from "react-hot-toast";
+import { useUIStateContext } from './context/UIStateContext';
+import { useSearchContext } from './context/SearchContext';
 export default function App() {
+  const pl = usePlaylistContext();
 
-  const pl = usePlaylists();
-  const { play, toggle, progress, audioRef, playing, volume, shuffle, repeat, prev, next, setProgress, setShuffle, setRepeat, setVolume } = useAudioPlayer();
-  const { recentPlaylists, recentSongs } = useRecents();
-  const { search, setSearch, filtered } = useSearch();
-  const { liked, likedSongs, toggleLike } = useLikedSongs();
-  const ctx = useContextMenu();
+  const { search, setSearch, } = useSearchContext();
 
-  const [view, setView] = useState("home");
-  const [rightPanel, setRightPanel] = useState("queue");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeArtist, setActiveArtist] = useState(null);
-
-  const [plMenuOpen, setPlMenuOpen] = useState(false);
-  const [plMenuPos, setPlMenuPos] = useState({ x: 0, y: 0 });
-
-  // const [rightCollapsed, setRightCollapsed] = useState(false);
-
-
-  const queue = usePlayerStore((s) => s.queue);
-  const currentIndex = usePlayerStore((s) => s.currentIndex);
-  const currentSong = queue[currentIndex] || null;
-
-
-  const navTo = (v) => {
-    setView(v); pl.setActivePL(null); setActiveArtist(null); setSidebarOpen(false);
-  };
-  const pct = currentSong?.duration
-    ? (progress / currentSong.duration) * 100
-    : 0;
+  const {
+    view, setView,
+    rightPanel, setRightPanel,
+    setActiveArtist,
+    plMenuOpen, setPlMenuOpen,
+    navTo,
+  } = useUIStateContext();
 
   return (
     <div style={{
@@ -61,7 +36,35 @@ export default function App() {
       overflow: "hidden",
       position: "relative",
     }}>
-    <Toaster position="top-center" reverseOrder={false} />
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            background: "#1a1635",
+            color: "#ddd6f3",
+            border: "1px solid #3a2f60",
+            borderRadius: "24px",
+            fontSize: "13px",
+            fontFamily: "'Space Grotesk', 'DM Sans', sans-serif",
+            fontWeight: "500",
+            padding: "9px 22px",
+            boxShadow: "0 4px 24px rgba(167,139,250,0.08)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#a78bfa",
+              secondary: "#08080f",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#f472b6",
+              secondary: "#08080f",
+            },
+          },
+        }}
+      />
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap');
@@ -248,53 +251,21 @@ export default function App() {
       `}</style>
 
 
-      <ContextMenu
-        menuSong={ctx.menuSong}
-        menuRef={ctx.menuRef}
-        menuPosition={ctx.menuPosition}
-        liked={liked}
-        toggleLike={toggleLike}
-        playlists={pl.playlists}
-        addToPlaylist={pl.addToPlaylist}
-        view={view}
-        navTo={navTo}
-        playlistSubmenu={ctx.playlistSubmenu}
-        setPlaylistSubmenu={ctx.setPlaylistSubmenu}
-        submenuSide={ctx.submenuSide}
-        setMenuSong={ctx.setMenuSong}
-      />
+      <ContextMenu />
+
       {plMenuOpen && pl.activePL && (
         <PlaylistMenu
-          playlist={pl.activePL}
-          position={plMenuPos}
           onClose={() => setPlMenuOpen(false)}
           onDelete={(id) => { pl.deletePlaylist(id); setView("home"); setPlMenuOpen(false); }}
-          onPlay={pl.playPlaylist}
         />
       )}
 
 
-      <MobileSidebarOverlay
-        sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
-        view={view} navTo={navTo} liked={liked}
-        playlists={pl.playlists} activePL={pl.activePL}
-        setActivePL={pl.setActivePL} setView={setView}
-        openPlaylist={(p) => pl.openPlaylist(p, setView, setSidebarOpen)}
-      />
-
-      <MobileTopBar setSidebarOpen={setSidebarOpen} navTo={navTo} />
-
-
       {/* Main shell */}
       <div className="layout-shell">
-
         {/* LEFT SIDEBAR (desktop) */}
         <aside className="sidebar-left" style={{ background: "#09081a", borderRight: "1px solid #131126", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <SidebarContent
-            view={view} navTo={navTo} liked={liked} playlists={pl.playlists}
-            activePL={pl.activePL} setActivePL={pl.setActivePL} setView={setView}
-            openPlaylist={(p) => pl.openPlaylist(p, setView, setSidebarOpen)}
-          />
+          <SidebarContent />
         </aside>
 
         {/* MAIN CONTENT */}
@@ -325,31 +296,9 @@ export default function App() {
           </div>
 
           <div style={{ padding: "0 28px 28px" }}>
-            <MainContent
-              view={view} song={currentSong} playing={playing}
-              liked={liked} likedSongs={likedSongs} toggleLike={toggleLike}  activePL={pl.activePL} activeArtist={activeArtist}
-              setActivePL={pl.setActivePL} setActiveArtist={setActiveArtist}
-              setView={setView} playlists={pl.playlists} setPlaylists={pl.setPlaylists}
-              play={play}
-              search={search} setSearch={setSearch} filtered={filtered}
-              createName={pl.createName} setCreateName={pl.setCreateName}
-              thumbnailPreview={pl.thumbnailPreview}
-              handleThumbnailUpload={pl.handleThumbnailUpload}
-              createDescription={pl.createDescription}
-              setCreateDescription={pl.setCreateDescription}
-              handleCreatePlaylist={() => pl.handleCreatePlaylist(() => setView("home"))}
-              selectedColor={pl.selectedColor} setSelectedColor={pl.setSelectedColor}
-              menuSong={ctx.menuSong} setMenuSong={ctx.setMenuSong}
-              menuPosition={ctx.menuPosition} setMenuPosition={ctx.setMenuPosition}
-              openPlaylist={(p) => pl.openPlaylist(p, setView, setSidebarOpen)}
-              playPlaylist={pl.playPlaylist} playSongFromPlaylist={pl.playSongFromPlaylist}
-              deletePlaylist={pl.deletePlaylist}
-              plMenuOpen={plMenuOpen} setPlMenuOpen={setPlMenuOpen} plMenuPos={plMenuPos} setPlMenuPos={setPlMenuPos}
-              recentPlaylists={recentPlaylists} recentSongs={recentSongs}
-            />
+            <MainContent />
           </div>
         </main>
-
         {/* RIGHT PANEL (desktop/tablet) */}
         <aside className="sidebar-right" style={{ background: "#09081a", borderLeft: "1px solid #131126" }}>
           <div style={{ display: "flex", gap: 4, padding: "18px 14px 12px", borderBottom: "1px solid #13112a", flexShrink: 0, flexWrap: "wrap" }}>
@@ -358,25 +307,12 @@ export default function App() {
             ))}
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px" }}>
-            <RightPanel
-              rightPanel={rightPanel} song={currentSong} playing={playing}
-              liked={liked} play={play}
-              setView={setView} setActiveArtist={setActiveArtist}
-            />
+            <RightPanel />
           </div>
         </aside>
       </div>
 
-      <PlayerBar
-        song={currentSong} playing={playing} toggle={toggle} toggleLike={toggleLike}
-        next={next} prev={prev} progress={progress}
-        setProgress={setProgress} volume={volume} setVolume={setVolume}
-        shuffle={shuffle} setShuffle={setShuffle}
-        repeat={repeat} setRepeat={setRepeat}
-        liked={liked}
-        rightPanel={rightPanel} setRightPanel={setRightPanel}
-        pct={pct} audioRef={audioRef}
-      />
+      <PlayerBar />
     </div>
   );
 }

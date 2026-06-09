@@ -1,8 +1,16 @@
 import { SONGS } from '../../constants/dummy.data';
 import SongTable from '../SongTable';
-import { saveSongToDB } from '../../api/songs';
+import { saveSongToDB } from '../../utils/songUtils';
+import useAudioPlayer from '../../hooks/useAudioPlayer';
+import { useContextMenu } from "../../context/SongMenuContext";
+import { useLikedSongsContext } from '../../context/LikedSongsContext';
+import { usePlayerStore } from '../../stores/usePlayer.store';
 
-const LikedView = ({ song, playing, liked, likedSongs, toggleLike, play, setMenuPosition, setMenuSong }) => {
+const LikedView = () => {
+    const { play, playing } = useAudioPlayer();
+    const { liked, likedSongs, toggleLike } = useLikedSongsContext();
+    const { setMenuPosition, setMenuSong } = useContextMenu();
+    const currentSong = usePlayerStore((s) => s.currentSong());
     return (
         <div className="fadein">
             <div style={{ display: "flex", alignItems: "flex-end", gap: 22, marginBottom: 28, background: "linear-gradient(135deg,#3b0d6e44,transparent)", borderRadius: 16, padding: "24px 24px 20px", flexWrap: "wrap" }}>
@@ -23,7 +31,7 @@ const LikedView = ({ song, playing, liked, likedSongs, toggleLike, play, setMenu
 
             <SongTable
                 songs={likedSongs}
-                current={song}
+                current={currentSong}
                 playing={playing}
                 liked={liked}
                 onPlay={(s) => { play(s); saveSongToDB(s); }}

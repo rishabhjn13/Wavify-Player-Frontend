@@ -1,4 +1,11 @@
-export default function SidebarContent({ view, navTo, liked, playlists, activePL, setActivePL, setView, setSidebarOpen, openPlaylist }) {
+import { useUIStateContext } from "../context/UIStateContext";
+import { usePlaylistContext } from "../context/PlaylistsContext";
+import { useLikedSongsContext } from "../context/LikedSongsContext";
+
+export default function SidebarContent() {
+    const { liked } = useLikedSongsContext();
+    const { playlists, activePL, setActivePL, setSidebarOpen, openPlaylist } = usePlaylistContext();
+    const { view, setView } = useUIStateContext();
     return (
         <>
             {/* Logo */}
@@ -16,7 +23,10 @@ export default function SidebarContent({ view, navTo, liked, playlists, activePL
                     { id: "search", label: "Search", icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg> },
                     { id: "liked", label: "Liked Songs", icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg> },
                 ].map(n => (
-                    <button key={n.id} className={`nav-item${view === n.id ? " active" : ""}`} onClick={() => navTo(n.id)}>
+                    <button key={n.id} className={`nav-item${view === n.id ? " active" : ""}`} onClick={() => {
+                        setView(n.id);
+                        setActivePL(null);
+                    }}>
                         {n.icon}{n.label}
                         {n.id === "liked" && liked.size > 0 && (
                             <span style={{ marginLeft: "auto", fontSize: 10, background: "#1a1635", color: "#a78bfa", borderRadius: 10, padding: "1px 7px" }}>{liked.size}</span>
@@ -38,7 +48,7 @@ export default function SidebarContent({ view, navTo, liked, playlists, activePL
 
             {/* Playlists */}
             <div style={{ flex: 1, overflowY: "auto", padding: "0 10px 12px" }}>
-                <div className={`pl-li${view === "liked" ? " active-pl" : ""}`} onClick={() => navTo("liked")}>
+                <div className={`pl-li${view === "liked" ? " active-pl" : ""}`} onClick={() => setView("liked")}>
                     <div style={{ width: 36, height: 36, borderRadius: 7, background: "linear-gradient(135deg,#7c3aed,#db2777)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
                     </div>
@@ -50,47 +60,24 @@ export default function SidebarContent({ view, navTo, liked, playlists, activePL
                 {playlists.map(pl => (
                     <div key={pl.id}
                         className={`pl-li${activePL?.id === pl.id ? " active-pl" : ""}`}
-                        onClick={() => { setActivePL(pl); setView("playlist"); if (setSidebarOpen) setSidebarOpen(false); openPlaylist(pl); }}>
-                        <div style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 7,
-                            flexShrink: 0,
-                            overflow: "hidden",
-                            background: pl.thumbnail
-                                ? "transparent"
-                                : `linear-gradient(135deg, ${pl.color}cc, ${pl.color}44)`
+                        onClick={() => {
+                            setActivePL(pl);
+                            setView("playlist");
+                            if (setSidebarOpen) { setSidebarOpen(false) };
+                            openPlaylist(pl, setView);
                         }}>
-                            {pl.thumbnail ? (
-                                <img
-                                    src={pl.thumbnail}
-                                    alt={pl.name}
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                        borderRadius: 7
-                                    }}
-                                    onError={(e) => {
-                                        // Fallback if image fails to load
-                                        e.target.style.display = 'none';
-                                        e.target.parentElement.style.background = `linear-gradient(135deg, ${pl.color}cc, ${pl.color}44)`;
-                                        // Optionally show music icon as final fallback
-                                    }}
-                                />
-                            ) : (
-                                <div style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: 18,
-                                    color: "#ddd6f3"
-                                }}>
-                                    ♫
-                                </div>
-                            )}
+                        <div style={{
+                            width: 36, height: 36, borderRadius: 7, flexShrink: 0, overflow: "hidden",
+                            background: `linear-gradient(135deg, ${pl.color}cc, ${pl.color}44)`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 18, color: "#ddd6f3"
+                        }}>
+                            {pl.thumbnail
+                                ? <img src={`http://localhost:8000${pl.thumbnail}`} alt={pl.name}
+                                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 7 }}
+                                    onError={e => { e.target.style.display = "none"; }} />
+                                : "♫"
+                            }
                         </div>
 
                         {/* Playlist Info */}

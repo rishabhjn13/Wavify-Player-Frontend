@@ -1,11 +1,21 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import SongTable from '../SongTable';
-import { saveSongToDB } from '../../api/songs';
-
-const PlaylistView = ({ activePL, song, playing, liked, toggleLike, playSongFromPlaylist, setMenuPosition, setMenuSong, setPlMenuOpen, setPlMenuPos, playPlaylist }) => {
-    const [sortBy, setSortBy] = useState(null); // "title" | "artist" | "duration"
+import { saveSongToDB } from '../../utils/songUtils';
+import { useContextMenu } from "../../context/SongMenuContext";
+import { usePlaylistContext } from '../../context/PlaylistsContext';
+import { usePlayerStore } from '../../stores/usePlayer.store';
+import { useLikedSongsContext } from '../../context/LikedSongsContext';
+import { useUIStateContext } from '../../context/UIStateContext';
+const PlaylistView = () => {
+    const [sortBy, setSortBy] = useState(null);
     const [sortDir, setSortDir] = useState("asc");
+
+    const { playing, activePL, playPlaylist, playSongFromPlaylist } = usePlaylistContext();
+    const { setMenuSong, setMenuPosition } = useContextMenu();
+    const { setPlMenuOpen, setPlMenuPos } = useUIStateContext();
+    const { liked, toggleLike } = useLikedSongsContext();
+    const currentSong = usePlayerStore((state) => state.currentSong());
 
     const handleSort = (col) => {
         if (sortBy === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -28,7 +38,7 @@ const PlaylistView = ({ activePL, song, playing, liked, toggleLike, playSongFrom
         const x = e.clientX + MENU_WIDTH > (window.innerWidth - RIGHT_PANEL_WIDTH) ? e.clientX - MENU_WIDTH : e.clientX;
         const y = e.clientY + MENU_HEIGHT > window.innerHeight ? e.clientY - MENU_HEIGHT : e.clientY;
         setPlMenuPos({ x, y });
-        setPlMenuOpen(v => !v);
+        setPlMenuOpen(true);
     };
 
     return (
@@ -45,7 +55,7 @@ const PlaylistView = ({ activePL, song, playing, liked, toggleLike, playSongFrom
                     boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
                 }}>
                     {activePL.thumbnail ? (
-                        <img src={activePL.thumbnail} alt={activePL.name}
+                        <img src={`http://localhost:8000${activePL.thumbnail}`} alt={activePL.name}
                             style={{ width: "100%", height: "100%", objectFit: "cover" }}
                             onError={(e) => { e.target.style.display = "none"; e.target.parentElement.style.background = `linear-gradient(135deg, ${activePL.color}cc, ${activePL.color}44)`; }} />
                     ) : (
@@ -99,11 +109,11 @@ const PlaylistView = ({ activePL, song, playing, liked, toggleLike, playSongFrom
 
             <SongTable
                 songs={sortedSongs}
-                current={song}
+                current={currentSong}
                 playing={playing}
                 liked={liked}
                 onPlay={(s) => {
-                    const index = sortedSongs.findIndex(x => x.id === s.id);
+                    const index = sortedSongs.findIndex(x => x.song_id === s.song_id);
                     playSongFromPlaylist(s, sortedSongs, index);
                     saveSongToDB(s);
                 }}

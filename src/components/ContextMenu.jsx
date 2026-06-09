@@ -1,24 +1,18 @@
 import AlbumArt from "./AlbumArt";
 import { toast } from "react-hot-toast";
-export default function ContextMenu({
-    menuSong,
-    menuRef,
-    menuPosition,
-    liked,
-    toggleLike,
-    playlists,
-    addToPlaylist,
-    navTo,
-    // Submenu states
-    playlistSubmenu,
-    setPlaylistSubmenu,
-    submenuSide,
-    setMenuSong,
-    API_URL,
-}) {
+import { useContextMenu } from "../context/SongMenuContext";
+import { useUIStateContext } from "../context/UIStateContext";
+import { usePlaylistContext } from "../context/PlaylistsContext";
+import { useLikedSongsContext } from "../context/LikedSongsContext";
+import { usePlayerStore } from "../stores/usePlayer.store";
+export default function ContextMenu() {
+    const { menuSong, menuRef, menuPosition, playlistSubmenu, setPlaylistSubmenu, submenuSide, setMenuSong } = useContextMenu();
+    const { liked, toggleLike } = useLikedSongsContext();
+    const { playlists, addToPlaylist } = usePlaylistContext();
+    const { navTo } = useUIStateContext();
+    const playNext = usePlayerStore((state) => state.playNext);
 
     if (!menuSong) return null;
-    console.log("Menusong is ", menuSong);
     return (
         <>
             {/* Backdrop */}
@@ -85,7 +79,7 @@ export default function ContextMenu({
                 </div>
 
                 {/* Add to Queue */}
-                <div className="ctx-item" onClick={() => { toast.info("Added to queue"); setMenuSong(null); }}>
+                <div className="ctx-item" onClick={() => { console.log("Added", menuSong); playNext(menuSong); }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8070a8" strokeWidth="2">
                         <line x1="8" y1="6" x2="21" y2="6" />
                         <line x1="8" y1="12" x2="21" y2="12" />
@@ -150,7 +144,6 @@ export default function ContextMenu({
                                             setPlaylistSubmenu(false);
                                         }}
                                     >
-                                        {console.log(pl)}
                                         <div style={{
                                             width: 28, height: 28, borderRadius: 5, flexShrink: 0,
                                             background: pl.color || "#1a1635",
@@ -188,10 +181,30 @@ export default function ContextMenu({
                     </svg>
                     Go to artist
                 </div>
-
+                <div style={{ height: 1, background: "#131126", margin: "4px 0" }} />
+                {/* Remove from Playlist - only show when inside a playlist */}
+                {/* {removeFromPlaylist && playlistId && (
+                    <>
+                        <div style={{ height: 1, background: "#131126", margin: "4px 0" }} />
+                        <div className="ctx-item" onClick={async () => {
+                            await removeFromPlaylist(playlistId, menuSong.song_id);
+                            toast.success(`Removed "${menuSong.title}" from playlist`);
+                            setMenuSong(null);
+                        }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2">
+                                <path d="M3 6h18" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M8 6V4h8v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                            </svg>
+                            <span style={{ color: "#f87171" }}>Remove from playlist</span>
+                        </div>
+                    </>
+                )} */}
                 {/* Add one for download song */}
 
-                <a href={`${API_URL}/download?video_id=${menuSong.id}&title=${encodeURIComponent(menuSong.title)}&artist=${encodeURIComponent(menuSong.artist)}&thumbnail=${encodeURIComponent(menuSong.album_art || menuSong.thumbnail || "")}`} target="_blank" rel="noopener noreferrer"
+                <a href={`http://localhost:8000/download?video_id=${menuSong.id}&title=${encodeURIComponent(menuSong.title)}&artist=${encodeURIComponent(menuSong.artist)}&thumbnail=${encodeURIComponent(menuSong.album_art || menuSong.thumbnail || "")}`} target="_blank" rel="noopener noreferrer"
                     download
                     style={{ textDecoration: "none" }}>
                     <div className="ctx-item" onClick={() => { toast.info("Downloading song"); setMenuSong(null); }}>

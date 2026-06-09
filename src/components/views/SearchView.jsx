@@ -1,14 +1,30 @@
 import SongTable from '../SongTable';
 import SectionHead from '../SectionHead';
-import { saveSongToDB } from '../../api/songs';
+import { saveSongToDB } from '../../utils/songUtils';
+
+import useAudioPlayer from '../../hooks/useAudioPlayer';
+import { useContextMenu } from '../../context/SongMenuContext';
+import { useRecentContext } from '../../context/RecentsContext';
+import { useLikedSongsContext } from '../../context/LikedSongsContext';
+import { useSearchContext } from '../../context/SearchContext';
+import { usePlayerStore } from '../../stores/usePlayer.store';
+import { usePlaylistContext } from '../../context/PlaylistsContext';
 
 const GENRES = [
     { g: "Electronic", c: "#4C1D95" }, { g: "Ambient", c: "#0F766E" },
-    { g: "Indie", c: "#BE185D" },      { g: "Rock", c: "#7C2D12" },
-    { g: "Chillout", c: "#1D4ED8" },   { g: "All", c: "#1e1635" },
+    { g: "Indie", c: "#BE185D" }, { g: "Rock", c: "#7C2D12" },
+    { g: "Chillout", c: "#1D4ED8" }, { g: "All", c: "#1e1635" },
 ];
 
-const SearchView = ({ search, setSearch, filtered, song, playing, liked, toggleLike, play, recentSongs, setMenuPosition, setMenuSong }) => {
+const SearchView = () => {
+    const { search, setSearch, filtered } = useSearchContext();
+    const { play, playing } = useAudioPlayer();
+    const currentSong = usePlayerStore((s) => s.currentSong());
+
+    const { recentSongs } = useRecentContext();
+    const { liked, toggleLike } = useLikedSongsContext();
+    const { setMenuPosition, setMenuSong } = useContextMenu();
+    const { playSongFromPlaylist } = usePlaylistContext();
     return (
         <div className="fadein">
             {search ? (
@@ -16,10 +32,14 @@ const SearchView = ({ search, setSearch, filtered, song, playing, liked, toggleL
                     <div style={{ fontSize: 13, color: "#5a507a", marginBottom: 14 }}>{filtered.length} results for "{search}"</div>
                     <SongTable
                         songs={filtered}
-                        current={song}
+                        current={currentSong}
                         playing={playing}
                         liked={liked}
-                        onPlay={(s) => { play(s); saveSongToDB(s); }}
+                        onPlay={(s) => {
+                            const index = filtered.findIndex(x => x.song_id === s.song_id);
+                            playSongFromPlaylist(s, filtered, index);
+                            saveSongToDB(s);
+                        }}
                         onLike={toggleLike}
                         setMenuPosition={setMenuPosition}
                         setMenuSong={setMenuSong}
@@ -41,7 +61,7 @@ const SearchView = ({ search, setSearch, filtered, song, playing, liked, toggleL
                     <SectionHead title="All Songs" />
                     <SongTable
                         songs={recentSongs}
-                        current={song}
+                        current={currentSong}
                         playing={playing}
                         liked={liked}
                         onPlay={play}

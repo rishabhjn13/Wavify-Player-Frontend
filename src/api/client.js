@@ -4,9 +4,9 @@ import toast from "react-hot-toast";
 // ---------------------------------------------------------------------------
 // Base client
 // ---------------------------------------------------------------------------
-
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  baseURL: BASE_URL,
   timeout: 30000, // 30s — yt-dlp can be slow
   headers: {
     "Content-Type": "application/json",
@@ -83,7 +83,7 @@ apiClient.interceptors.response.use(
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
-
+export { BASE_URL };
 export default apiClient;
 
 /**

@@ -3,7 +3,7 @@ import Bars from "./Bars";
 
 
 export default function SongTable({ songs = [], current, playing, onPlay, onLike, liked, setMenuPosition, setMenuSong, compact = false }) {
-  const currentId = current?.id || null;
+  const currentId = current?.song_id || null;
   return (
     <div>
       <div style={{
@@ -17,8 +17,8 @@ export default function SongTable({ songs = [], current, playing, onPlay, onLike
       </div>
       {songs.filter(Boolean).map((s, i) => (
         <div
-          key={s.id}
-          className={`song-row${currentId === s.id ? " active-row" : ""}`}
+          key={s.song_id}
+          className={`song-row${currentId === s.song_id ? " active-row" : ""}`}
           onClick={() => onPlay(s)}
           onContextMenu={(e) => {
             e.preventDefault();
@@ -50,7 +50,7 @@ export default function SongTable({ songs = [], current, playing, onPlay, onLike
           }}
         >
           <div style={{ fontSize: 12, color: "#3a3060", textAlign: "center" }}>
-            {currentId === s.id ? <Bars playing={playing} color="#a78bfa" /> : <span>{i + 1}</span>}
+            {currentId === s.song_id ? <Bars playing={playing} color="#a78bfa" /> : <span>{i + 1}</span>}
           </div>
 
           <AlbumArt song={s} size={36} radius={6} />
@@ -58,8 +58,8 @@ export default function SongTable({ songs = [], current, playing, onPlay, onLike
           <div style={{ minWidth: 0 }}>
             <div style={{
               fontSize: 13.5,
-              fontWeight: currentId === s.id ? 600 : 400,
-              color: currentId === s.id ? "#a78bfa" : "#ddd6f3",
+              fontWeight: currentId === s.song_id ? 600 : 400,
+              color: currentId === s.song_id ? "#a78bfa" : "#ddd6f3",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis"
@@ -75,11 +75,11 @@ export default function SongTable({ songs = [], current, playing, onPlay, onLike
           {/* Like Button */}
           <div style={{ display: "flex", alignItems: "center" }}>
             <button
-              className={`iBtn${liked.has(s.id) ? " heart-lit" : ""}`}
+              className={`iBtn${liked.has(s.song_id) ? " heart-lit" : ""}`}
               style={{ width: 26, height: 26 }}
               onClick={e => { e.stopPropagation(); onLike(s); }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={liked.has(s.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={liked.has(s.song_id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </button>

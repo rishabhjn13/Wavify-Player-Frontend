@@ -1,8 +1,13 @@
 import AlbumArt from "../AlbumArt";
-import { SONGS } from "../../constants/dummy.data";
 import toast from "react-hot-toast";
+import { usePlaylistContext } from "../../context/PlaylistsContext";
+import { useUIStateContext } from "../../context/UIStateContext";
+import { useRecentContext } from "../../context/RecentsContext";
 
-const CreateView = ({ thumbnailPreview, handleThumbnailUpload, createName, setCreateName, createDescription, setCreateDescription, selectedColor, setSelectedColor, handleCreatePlaylist }) => {
+const CreateView = () => {
+    const { createName, setCreateName, createDescription, setCreateDescription, selectedColor, setSelectedColor, thumbnailPreview, handleThumbnailUpload, handleCreatePlaylist } = usePlaylistContext();
+    const { recentSongs } = useRecentContext();
+    const { setView } = useUIStateContext();
     return (
         <div className="fadein" style={{ maxWidth: 560 }}>
             <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "#f0ecff", marginBottom: 6 }}>Create Playlist</div>
@@ -115,13 +120,13 @@ const CreateView = ({ thumbnailPreview, handleThumbnailUpload, createName, setCr
             <button
                 className="cbtn"
                 style={{ marginBottom: 22 }}
-                onClick={handleCreatePlaylist}
+                onClick={() => handleCreatePlaylist(() => setView("home"))}
             >
                 Create Playlist
             </button>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#5a507a", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 12 }}>Add Songs</div>
-            {SONGS.map(s => (
-                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "8px 10px", borderRadius: 9, cursor: "pointer" }}
+            {recentSongs.map(s => (
+                <div key={s.song_id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "8px 10px", borderRadius: 9, cursor: "pointer" }}
                     onMouseEnter={e => e.currentTarget.style.background = "#0e0c1c"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <AlbumArt song={s} size={40} radius={7} />

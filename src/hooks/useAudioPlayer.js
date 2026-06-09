@@ -1,27 +1,21 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import toast from "react-hot-toast";
+import { useState, useEffect, useCallback } from "react";
 import { usePlayerStore } from "../stores/usePlayer.store";
 import apiClient from "../api/client";
+import { useAudioContext } from "../context/AudioContext";
+import toast from "react-hot-toast";
 
 export default function useAudioPlayer() {
-    const audioRef = useRef(new Audio());
+    const { audioRef } = useAudioContext();
 
+    const lastPlayedId = usePlayerStore((state) => state.lastPlayedId);
+    const setLastPlayedId = usePlayerStore((state) => state.setLastPlayedId);
+    const currentSong = usePlayerStore((state) => state.currentSong());
     const queue = usePlayerStore((state) => state.queue);
-    const currentIndex = usePlayerStore((state) => state.currentIndex);
-    const currentSong = queue[currentIndex] || null;
-
     const nextSongAction = usePlayerStore((state) => state.nextSong);
     const prevSongAction = usePlayerStore((state) => state.prevSong);
     const setQueue = usePlayerStore((state) => state.setQueue);
-
-    const [playing, setPlaying] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const [volume, setVolume] = useState(75);
-    const [shuffle, setShuffle] = useState(false);
-    const [repeat, setRepeat] = useState(false);
+    const { playing, setPlaying, progress, setProgress, volume, setVolume, shuffle, setShuffle, repeat, setRepeat } = usePlayerStore();
     const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-
-    const justRestored = useRef(false);
 
     // -------------------------------------------------------------------------
     // Restore last played song on mount
@@ -35,9 +29,8 @@ export default function useAudioPlayer() {
                 const { data: song } = await apiClient.get("/songs/last-played");
                 if (!song) return;
 
-                justRestored.current = true;
                 setQueue([{
-                    id: song.song_id,
+                    song_id: song.song_id,
                     title: song.title,
                     artist: song.artist,
                     album: song.album || "",
@@ -47,7 +40,6 @@ export default function useAudioPlayer() {
 
             } catch (err) {
                 console.error("Failed to restore last played song:", err);
-                // Interceptor already shows toast for most errors
             }
         };
 
@@ -60,52 +52,34 @@ export default function useAudioPlayer() {
 
     useEffect(() => {
         if (!currentSong) return;
-        if (justRestored.current) {
-            justRestored.current = false;
-            return;
-        }
+        if (lastPlayedId === currentSong.song_id) return;
 
         let cancelled = false;
 
         const playCurrentSong = async () => {
             setIsLoadingAudio(true);
-            const toastId = toast.loading(`Loading "${currentSong.title}"...`);
-
             try {
                 audioRef.current.pause();
                 audioRef.current.src = "";
-
                 const { data } = await apiClient.get("/get-audio", {
                     params: { song_id: currentSong.song_id }
                 });
-
                 if (cancelled) return;
                 if (!data?.stream_url) throw new Error("No stream URL available");
-
                 document.title = `${currentSong.title} - ${currentSong.artist} | wavify`;
                 audioRef.current.src = data.stream_url;
-
                 await audioRef.current.play();
-                toast.success(`Now playing: ${currentSong.title}`, { id: toastId });
-
+                setLastPlayedId(currentSong.song_id);
             } catch (err) {
                 console.error("Audio fetch failed:", err);
-                if (cancelled) return;
-
-                toast.error(
-                    err.message?.includes("No stream URL")
-                        ? "Could not load song. Try again."
-                        : "Failed to play song",
-                    { id: toastId }
-                );
             } finally {
                 setIsLoadingAudio(false);
             }
         };
 
         playCurrentSong();
-
         return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentSong]);
 
     // -------------------------------------------------------------------------
@@ -128,31 +102,23 @@ export default function useAudioPlayer() {
             }
         };
 
-        const onError = (e) => {
-            console.error("Audio playback error:", e);
-            toast.error("Playback error — trying next song...");
-            nextSongAction();
-        };
-
         audio.addEventListener("play", onPlay);
         audio.addEventListener("pause", onPause);
         audio.addEventListener("timeupdate", onTimeUpdate);
         audio.addEventListener("ended", onEnded);
-        audio.addEventListener("error", onError);
 
         return () => {
             audio.removeEventListener("play", onPlay);
             audio.removeEventListener("pause", onPause);
             audio.removeEventListener("timeupdate", onTimeUpdate);
             audio.removeEventListener("ended", onEnded);
-            audio.removeEventListener("error", onError);
         };
-    }, [nextSongAction, repeat]);
+    }, [audioRef, nextSongAction, repeat, setPlaying, setProgress]);
 
     // Volume control
     useEffect(() => {
         audioRef.current.volume = volume / 100;
-    }, [volume]);
+    }, [audioRef, volume]);
 
     // -------------------------------------------------------------------------
     // Controls
@@ -160,8 +126,12 @@ export default function useAudioPlayer() {
 
     const toggle = () => {
         const audio = audioRef.current;
+        if (!audio.src || audio.src === window.location.href) {
+            toast.error("This song isn't loaded");
+            return;
+        }
         if (audio.paused) {
-            audio.play().catch(() => toast.error("Failed to resume playback"));
+            audio.play();
         } else {
             audio.pause();
         }
@@ -179,10 +149,17 @@ export default function useAudioPlayer() {
     };
 
     const play = useCallback((song) => {
+        console.log(song);
         if (song) {
-            usePlayerStore.getState().setQueue([song], 0);
+            setProgress(0);
+            audioRef.current.currentTime = 0;
+            usePlayerStore.getState().setQueue([{
+                ...song,
+                duration: song.duration ?? song.duration_sec ?? 0,
+                thumbnail: song.thumbnail ?? song.album_art ?? "",
+            }], 0);
         }
-    }, []);
+    }, [audioRef, setProgress]);
 
     const progressPercent = currentSong?.duration
         ? Math.floor((progress / currentSong.duration) * 100)
@@ -206,5 +183,6 @@ export default function useAudioPlayer() {
         audioRef,
         queue,
         isLoadingAudio,
+        currentSong
     };
 }

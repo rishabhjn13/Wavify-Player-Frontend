@@ -1,8 +1,8 @@
-import apiClient from "./client";
+import apiClient from "../api/client";
 export const saveSongToDB = async (s) => {
     try {
         await apiClient.post("/songs", {
-            song_id: s.id, // Change this to song_id if your backend expects that
+            song_id: s.song_id,
             title: s.title,
             artist: s.artist,
             album: s.album || "",
